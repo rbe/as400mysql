@@ -1,0 +1,48 @@
+#!/usr/bin/ksh
+
+LOGFILE=/usr/local/as400import/as400import.log
+PATH=/usr/local/python/2.1/bin:$PATH
+export PATH
+LD_LIBRARY_PATH=/opt/sfw/lib:/opt/mysql/3.23.57/lib/mysql:/opt/mysql/4.0.16/lib/mysql
+export LD_LIBRARY_PATH
+FILES_01=`ls /export/home/as400/*.01.gz`
+FILES_02=`ls /export/home/as400/*.02.gz`
+FILES_TES=`ls /export/home/as400/*.tes.gz`
+
+LOGDIR="/export/home/as400/log/import"
+
+project1_import() {
+	for i in $FILES_01
+	do
+		gzip -d $i
+		j=${i%%.gz}
+		echo "`date`: project1: $j"
+		python as400mysql.pyc type=import file=$j project=project1 > $LOGDIR/as400import.`date +%Y%m%d-%H%M`.log 2>&1
+	done
+}
+
+project2_import() {
+	for i in $FILES_02
+	do
+		gzip -d $i
+		j=${i%%.gz}
+		echo "`date`: project2: $j"
+		python as400mysql.pyc type=import file=$j project=project2 > $LOGDIR/as400import.`date +%Y%m%d-%H%M`.log 2>&1
+	done
+}
+
+main() {
+	project1_import
+	project2_import
+}
+
+echo
+echo "1Ci(R) GmbH, Muenster, http://www.1ci.de"
+echo "MySQL <-> AS/400 IM-/EXPORT"
+echo
+mkdir -p $LOGDIR
+if [ ! -f /export/home/as400/as400import.lock ]; then
+        main
+else
+        echo "`date`: Lockfile found!"
+fi

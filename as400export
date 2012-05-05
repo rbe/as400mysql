@@ -1,0 +1,32 @@
+#!/usr/bin/ksh
+
+LOGFILE=/usr/local/as400import/as400export.log
+PATH=/usr/local/python/2.1/bin:$PATH
+export PATH
+LD_LIBRARY_PATH=/opt/sfw/lib:/opt/mysql/3.23.57/lib/mysql:/opt/mysql/4.0.16/lib/mysql
+export LD_LIBRARY_PATH
+
+LOGDIR="/export/home/as400/log/export"
+
+winbox2000_export() {
+	echo "`date`: exporting..."
+	python as400mysql.pyc type=export project=project1 > $LOGDIR/as400export.`date +%Y%m%d-%H%M`.log 2>&1
+}
+
+main() {
+	winbox2000_export
+	###mv *.exp /export/home/as400
+	cat *.tmp *.exp > /export/home/as400/$$.exp
+	mv *.tmp *.exp backup
+}
+
+echo
+echo "1Ci(R) GmbH, Muenster, http://www.1ci.de"
+echo "MySQL <-> AS/400 IM-/EXPORT"
+echo
+mkdir -p $LOGDIR
+if [ ! -f /export/home/as400/as400export.lock ]; then
+	main
+else
+	echo "`date`: Lockfile found!"
+fi
